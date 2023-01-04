@@ -8,20 +8,31 @@ indent() {
 }
 
 BUILD_DIR="$1"
+BASE_DIR="$(dirname "$BUILD_DIR")"
 CACHE_DIR="$2"
 ENV_DIR="$3"
 STAGE="$(mktemp -d)"
+STAGE2="$(mktemp -d)"
 
 if [ ! -f "${ENV_DIR}/APP_BASE" ]; then
     echo "APP_BASE was not set. Aborting" | indent
     exit 1
 fi
+
+if [ ! -f "${ENV_DIR}/APP_LIB" ]; then
+    echo "APP_LIB was not set. Aborting" | indent
+    exit 1
+fi
+
 APP_BASE="$(cat "${ENV_DIR}/APP_BASE")"
+APP_LIB="$(cat "${ENV_DIR}/APP_LIB")"
 
 (
     mv "${BUILD_DIR}/${APP_BASE}" "${STAGE}" &&
+    mv "${BUILD_DIR}/${APP_LIB}" "${STAGE2}" &&
     rm -rf "${BUILD_DIR}"/* &&
     mv "${STAGE}/$(basename "$APP_BASE")"/* "${BUILD_DIR}"
+    mv "${STAGE2}/$(basename "$APP_LIB")" "${BASE_DIR}"
 )
 
 if [ $? -ne 0 ]; then
@@ -29,5 +40,13 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-echo "Copied ${APP_BASE} to root of app successfully" | indent
+echo "Copied ${APP_BASE} to root of build folder successfully" | indent
+echo "Copied ${APP_LIB} to root of app successfully" | indent
 
+echo '-----'
+ls "${BASE_DIR}"
+echo '-----'
+ls "${BUILD_DIR}"
+echo '-----'
+ls "${BASE_DIR}/common"
+echo '-----'
